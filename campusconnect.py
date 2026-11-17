@@ -1,0 +1,185 @@
+# =====================================================
+# CAMPUSCONNECT - ALU LOST AND FOUND SYSTEM
+#  DATABASE MANAGEMENT
+# =====================================================
+
+import sqlite3
+
+
+class Database:
+    """Handles database operations for CampusConnect."""
+
+    def __init__(self, database_name="campusconnect.db"):
+        self.database_name = database_name
+        self.create_tables()
+
+    def connect(self):
+        """Connect to the SQLite database."""
+        return sqlite3.connect(self.database_name)
+
+    def create_tables(self):
+        """Create the lost and found items tables."""
+
+        connection = self.connect()
+        cursor = connection.cursor()
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS lost_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                description TEXT,
+                location TEXT NOT NULL,
+                date_lost TEXT NOT NULL,
+                contact TEXT NOT NULL
+            )
+        """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS found_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_name TEXT NOT NULL,
+                category TEXT NOT NULL,
+                description TEXT,
+                location TEXT NOT NULL,
+                date_found TEXT NOT NULL,
+                contact TEXT NOT NULL,
+                status TEXT DEFAULT 'Available',
+                claimed_by TEXT
+            )
+        """)
+
+        connection.commit()
+        connection.close()
+
+        print("Database tables created successfully!")
+
+    def insert_lost_item(self, item):
+        """Save a reported lost item in the database."""
+
+        connection = self.connect()
+        cursor = connection.cursor()
+
+        cursor.execute("""
+            INSERT INTO lost_items (
+                item_name, category, description,
+                location, date_lost, contact
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            item["item_name"],
+            item["category"],
+            item["description"],
+            item["location"],
+            item["date_lost"],
+            item["contact"]
+        ))
+
+        connection.commit()
+        item_id = cursor.lastrowid
+        connection.close()
+
+        print(f"Lost item recorded successfully! ID: {item_id}")
+        return item_id
+
+    def insert_found_item(self, item):
+        """Save a found item in the database."""
+
+        connection = self.connect()
+        cursor = connection.cursor()
+
+        cursor.execute("""
+            INSERT INTO found_items (
+                item_name, category, description,
+                location, date_found, contact
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            item["item_name"],
+            item["category"],
+            item["description"],
+            item["location"],
+            item["date_found"],
+            item["contact"]
+        ))
+
+        connection.commit()
+        item_id = cursor.lastrowid
+        connection.close()
+
+        print(f"Found item recorded successfully! ID: {item_id}")
+        return item_id
+
+    def fetch_items(self, search_term=None):
+        """Retrieve lost and found items from the database."""
+
+        connection = self.connect()
+        cursor = connection.cursor()
+
+        if search_term:
+            search = f"%{search_term}%"
+
+            cursor.execute("""
+                SELECT id, item_name, category, description,
+                       location, date_lost, contact, 'Lost' AS item_type
+                FROM lost_items
+                WHERE item_name LIKE ?
+                   OR category LIKE ?
+                   OR location LIKE ?
+
+                UNION ALL
+
+                SELECT id, item_name, category, description,
+                       location, date_found, contact, 'Found' AS item_type
+                FROM found_items
+                WHERE item_name LIKE ?
+                   OR category LIKE ?
+                   OR location LIKE ?
+            """, (search, search, search, search, search, search))
+
+        else:
+            cursor.execute("""
+                SELECT id, item_name, category, description,
+                       location, date_lost, contact, 'Lost' AS item_type
+                FROM lost_items
+
+                UNION ALL
+
+                SELECT id, item_name, category, description,
+                       location, date_found, contact, 'Found' AS item_type
+                FROM found_items
+            """)
+
+        results = cursor.fetchall()
+        connection.close()
+
+        return results
+    def update_item_status(self, item_id, claimant_name):
+        """Mark a found item as returned and record who claimed it."""
+
+        connection = self.connect()
+        cursor = connection.cursor()
+
+        cursor.execute("""
+            UPDATE found_items
+            SET status = 'Returned',
+                claimed_by = ?
+            WHERE id = ?
+            AND status = 'Available'
+        """, (claimant_name, item_id))
+
+        connection.commit()
+
+        updated = cursor.rowcount > 0
+
+        connection.close()
+
+        if updated:
+            print("Item successfully marked as returned!")
+        else:
+            print("Item not found or has already been returned.")
+
+        return updated
+
+
+   
