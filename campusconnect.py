@@ -227,6 +227,65 @@ class Database:
             print("Item not found or has already been returned.")
 
         return updated
+# =====================================================
+#  LOST ITEM REPORTING
+# =====================================================
+
+from datetime import datetime
+
+
+class LostItem:
+    """Handles reporting of lost items."""
+
+    def __init__(self, database):
+        self.database = database
+
+    def report_lost_item(self):
+        """Collect lost item details and save them."""
+
+        print("\n========== REPORT A LOST ITEM ==========")
+
+        item_name = input("Enter item name: ").strip()
+        category = input("Enter item category: ").strip()
+        description = input("Describe the item: ").strip()
+        location = input("Where did you last see the item? ").strip()
+        date_lost = input("Date lost (YYYY-MM-DD): ").strip()
+        contact = input("Enter your contact information: ").strip()
+
+         
+        if not all([
+            item_name,
+            category,
+            description,
+            location,
+            date_lost,
+            contact
+        ]):
+            print("\nError: All fields are required.")
+            return
+
+      
+        try:
+            datetime.strptime(date_lost, "%Y-%m-%d")
+        except ValueError:
+            print("\nError: Invalid date format.")
+            print("Please use YYYY-MM-DD.")
+            return
+
+        
+        item = {
+            "item_name": item_name,
+            "category": category,
+            "description": description,
+            "location": location,
+            "date_lost": date_lost,
+            "contact": contact
+        }
+
+      
+        self.database.insert_lost_item(item)
+
+        print("\nYour lost item report has been submitted!")
 
 
 # =====================================================
@@ -292,3 +351,4 @@ class SearchItems:
             print("------------------------------------")
 
         print(f"\nTotal matching items: {len(results)}")
+
