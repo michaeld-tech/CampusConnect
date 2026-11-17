@@ -154,6 +154,53 @@ class Database:
         connection.close()
 
         return results
+
+    def search_items(self, field, keyword):
+        """Search lost and found items by a specific field."""
+
+        allowed_fields = ["item_name", "category", "location"]
+
+        if field not in allowed_fields:
+            print("Invalid search field.")
+            return []
+
+        connection = self.connect()
+        cursor = connection.cursor()
+
+        search = f"%{keyword}%"
+
+        query = f"""
+            SELECT id, item_name, category, description,
+                   location, date_lost AS item_date,
+                   contact, 'Lost' AS item_type
+            FROM lost_items
+            WHERE {field} LIKE ?
+
+            UNION ALL
+
+            SELECT id, item_name, category, description,
+                   location, date_found AS item_date,
+                   contact, 'Found' AS item_type
+            FROM found_items
+            WHERE {field} LIKE ?
+        """
+
+        cursor.execute(query, (search, search))
+
+        columns = [
+            description[0]
+            for description in cursor.description
+        ]
+
+        results = [
+            dict(zip(columns, row))
+            for row in cursor.fetchall()
+        ]
+
+        connection.close()
+
+        return results
+
     def update_item_status(self, item_id, claimant_name):
         """Mark a found item as returned and record who claimed it."""
 
