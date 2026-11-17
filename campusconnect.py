@@ -285,8 +285,8 @@ class LostItem:
 
         print("\nYour lost item report has been submitted!")
 # =====================================================
-# MEMBER 3: FOUND ITEM REGISTRATION
-# =====================================================
+#  FOUND ITEM REGISTRATION
+# ============================================================
 
 class FoundItem:
     """Handles registration of found items."""
@@ -463,8 +463,8 @@ class Database:
 
 # =====================================================
 # CAMPUSCONNECT - MAIN APPLICATION
-# MEMBER 5: SYSTEM INTEGRATION AND CLAIM MANAGEMENT
-# =====================================================
+#  SYSTEM INTEGRATION AND CLAIM MANAGEMENT
+# =============================================================
 
 class CampusConnect:
     """Main application controller for CampusConnect."""
