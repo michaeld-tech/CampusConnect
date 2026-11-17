@@ -409,3 +409,255 @@ class Database:
 
         connection.close()
         return results
+
+# =====================================================
+# CAMPUSCONNECT - MAIN APPLICATION
+# MEMBER 5: SYSTEM INTEGRATION AND CLAIM MANAGEMENT
+# =====================================================
+
+
+class CampusConnect:
+    """Main application controller for CampusConnect."""
+
+    def __init__(self, database):
+        """Initialize the application."""
+        self.database = database
+        self.running = True
+
+    def display_menu(self):
+        """Display the main application menu."""
+
+        print("\n" + "=" * 50)
+        print("          CAMPUSCONNECT")
+        print("       LOST AND FOUND SYSTEM")
+        print("=" * 50)
+
+        print("1. Report Lost Item")
+        print("2. Report Found Item")
+        print("3. Search for Items")
+        print("4. View Available Items")
+        print("5. Claim/Collect Found Item")
+        print("6. Exit")
+
+        print("=" * 50)
+
+    def get_input(self, message):
+        """Get validated input from the user."""
+
+        while True:
+            value = input(message).strip()
+
+            if value:
+                return value
+
+            print("Input cannot be empty. Please try again.")
+
+    def get_item_id(self):
+        """Get a valid item ID."""
+
+        while True:
+            try:
+                item_id = int(input("Enter item ID: "))
+
+                if item_id > 0:
+                    return item_id
+
+                print("Item ID must be greater than zero.")
+
+            except ValueError:
+                print("Please enter a valid numerical ID.")
+
+    def report_lost_item(self):
+        """Allow users to report lost items."""
+
+        print("\n========== REPORT LOST ITEM ==========")
+
+        item = (
+            self.get_input("Item name: "),
+            self.get_input("Category: "),
+            self.get_input("Description: "),
+            self.get_input("Location lost: "),
+            self.get_input("Date lost (YYYY-MM-DD): "),
+            self.get_input("Contact information: ")
+        )
+
+        try:
+            self.database.insert_lost_item(item)
+
+            print("\nLost item reported successfully!")
+
+        except Exception as error:
+            print("Unable to report lost item:", error)
+
+    def report_found_item(self):
+        """Allow users to report found items."""
+
+        print("\n========== REPORT FOUND ITEM ==========")
+
+        item = (
+            self.get_input("Item name: "),
+            self.get_input("Category: "),
+            self.get_input("Description: "),
+            self.get_input("Location found: "),
+            self.get_input("Date found (YYYY-MM-DD): "),
+            self.get_input("Contact information: ")
+        )
+
+        try:
+            self.database.insert_found_item(item)
+
+            print("\nFound item reported successfully!")
+
+        except Exception as error:
+            print("Unable to report found item:", error)
+
+    def search_items(self):
+        """Search for lost and found items."""
+
+        print("\n========== SEARCH ITEMS ==========")
+
+        search_term = self.get_input(
+            "Enter item name, category or location: "
+        )
+
+        try:
+            items = self.database.fetch_items(search_term)
+
+            if not items:
+                print("\nNo matching items found.")
+                return
+
+            print("\nSearch Results")
+            print("-" * 50)
+
+            for item in items:
+                print(item)
+
+        except Exception as error:
+            print("Search failed:", error)
+
+    def view_available_items(self):
+        """Display available found items."""
+
+        print("\n========== AVAILABLE FOUND ITEMS ==========")
+
+        try:
+            items = self.database.fetch_items()
+
+            if not items:
+                print("No items currently available.")
+                return
+
+            available_items = [
+                item for item in items
+                if len(item) > 8 and item[8] == "Available"
+            ]
+
+            if not available_items:
+                print("No available found items.")
+                return
+
+            for item in available_items:
+                print("-" * 50)
+                print("Item ID:", item[0])
+                print("Item Name:", item[1])
+                print("Category:", item[2])
+                print("Description:", item[3])
+                print("Location:", item[4])
+                print("Date Found:", item[5])
+                print("Contact:", item[6])
+                print("Status:", item[8])
+
+        except Exception as error:
+            print("Unable to retrieve available items:", error)
+
+    def claim_found_item(self):
+        """Allow users to collect a found item."""
+
+        print("\n========== CLAIM FOUND ITEM ==========")
+
+        try:
+            item_id = self.get_item_id()
+
+            claimant_name = self.get_input(
+                "Enter your full name: "
+            )
+
+            print("\nConfirm that you have verified ownership.")
+            confirmation = input(
+                "Has the item been successfully handed over? (yes/no): "
+            ).strip().lower()
+
+            if confirmation != "yes":
+                print("\nCollection not confirmed.")
+                return
+
+            self.database.update_item_status(
+                item_id,
+                claimant_name
+            )
+
+            print("\nItem collection recorded successfully!")
+            print("The item status has been updated.")
+
+        except Exception as error:
+            print("Unable to process item collection:", error)
+
+    def run(self):
+        """Run the main application."""
+
+        print("\nWelcome to CampusConnect!")
+
+        while self.running:
+
+            self.display_menu()
+
+            choice = input("Select an option (1-6): ").strip()
+
+            if choice == "1":
+                self.report_lost_item()
+
+            elif choice == "2":
+                self.report_found_item()
+
+            elif choice == "3":
+                self.search_items()
+
+            elif choice == "4":
+                self.view_available_items()
+
+            elif choice == "5":
+                self.claim_found_item()
+
+            elif choice == "6":
+                print("\nThank you for using CampusConnect!")
+                print("Goodbye!")
+                self.running = False
+
+            else:
+                print("\nInvalid choice. Please select 1-6.")
+
+
+# =====================================================
+# APPLICATION ENTRY POINT
+# =====================================================
+
+def main():
+    """Initialize the database and start CampusConnect."""
+
+    try:
+        database = Database()
+
+        application = CampusConnect(database)
+
+        application.run()
+
+    except KeyboardInterrupt:
+        print("\n\nApplication interrupted. Goodbye!")
+
+    except Exception as error:
+        print("\nApplication error:", error)
+
+
+if __name__ == "__main__":
+    main()
