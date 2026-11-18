@@ -1,6 +1,6 @@
 # CampusConnect - ALU Lost and Found System
 
-CampusConnect is a simple lost-and-found system for the African Leadership University community. Students can report belongings they have lost, register items they have found, and claim found items that belong to them.
+CampusConnect is a straightforward system that helps the African Leadership University students handle lost and found items.
 
 ## Main Menu
 
@@ -10,7 +10,7 @@ CampusConnect is a simple lost-and-found system for the African Leadership Unive
             ALU LOST AND FOUND SYSTEM
 ==================================================
 
-How may we help you today?
+How may we assist you today?
 
 1. Report a Lost Item
 2. Register a Found Item
@@ -20,15 +20,15 @@ How may we help you today?
 
 ### 1. Report a Lost Item
 
-Enter the item's name, category, description, where you last saw it, the date it was lost (YYYY-MM-DD) and your contact details. All fields are required.
+In this section, you need to enter the lost item’s name, category, description, location where it was last however, seen and date of loss (YYYY-MM-DD). Contact information is mandatory.
 
 ### 2. Register a Found Item
 
-Enter the item's name, category, description, where you found it, the date it was found (YYYY-MM-DD) and your contact details. The item is saved as **Available** so its owner can claim it.
+To register a found item, you must enter the name of the item, its category, description, location where it was found, date of finding the item and your contact details. The item is listed as “Available”.
 
 ### 3. Claim for an Item
 
-This option opens a smaller menu:
+Upon selecting this option, you will see the following submenu.
 
 ```
 1. View all available items
@@ -36,8 +36,8 @@ This option opens a smaller menu:
 0. Back to main menu
 ```
 
-- **View all available items** lists every found item that has not been collected yet.
-- **Search for an item** finds available items by name, category or location.
+- **View all available items** option gives a list of all lost items that are still as unclaimed.
+- **Search for an item** helps find lost items by name, category or location.
 
 After the items are listed, enter the ID of the item you want to claim, or `0` to go back. Then enter your full name and confirm that the item has been handed over. The item is marked as **Returned**, your name is recorded, and the item no longer appears as available.
 
