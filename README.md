@@ -39,33 +39,33 @@ Upon selecting this option, you will see the following submenu.
 - **View all available items** option gives a list of all lost items that are still as unclaimed.
 - **Search for an item** helps find lost items by name, category or location.
 
-After the items are listed, enter the ID of the item you want to claim, or `0` to go back. Then enter your full name and confirm that the item has been handed over. The item is marked as **Returned**, your name is recorded, and the item no longer appears as available.
+After you complete the listing process, enter the ID of the item you wish to seize or `0` for reverting back. Enter your full name and confirm that the item has been received. The item now gets the status **Returned**, your name is recorded, and the item will not be shown as available anymore.
 
 ### 0. Exit System
 
-Closes the application.
+Closes the app.
 
-## Running the Project
+## Starting the Project
 
-You need Python 3. No extra packages are required.
+You need Python version 3.0. No additional packages necessary.
 
 ```
 python main.py
 ```
 
-The SQLite database (`campusconnect.db`) is created automatically in the project folder the first time the application runs. It is always used from that location, no matter which folder you run the command from.
+The SQLite database file named `campusconnect.db` will be created automatically when the app is run for the first time. It will always be taken from this location irrespective of the folder from which you run the command.
 
 ## Database
 
-The system stores information in two tables:
+The application keeps its information in two tables:
 
-- **lost_items** holds the details of items reported missing.
-- **found_items** holds the details of items reported found, their status (`Available` or `Returned`) and the name of the person who collected them.
+- **lost_items** which contain the particulars of lost items;
+- **found_items** which summarize details of found items, their availability (i.e. `Available` or `Returned`) and name of the person who took them.
 
-## Code Structure
+## Code Organization
 
-- `main.py` is the entry point. Run this file to start the application.
-- `campusconnect.py` contains the application classes:
+- `main.py` is the entry point of the system, i.e. the file needed to start the app.
+- `campusconnect.py` is the file that contains classes of the program.
 
 | Class          | Responsibility                                                  |
 | -------------- | --------------------------------------------------------------- |
