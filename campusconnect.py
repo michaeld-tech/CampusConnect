@@ -119,7 +119,7 @@ class Database:
 
         Optionally filter by item_name, category or location.
         """
-
+        
         query = """
             SELECT id, item_name, category, description,
                    location, date_found, contact, status
@@ -469,3 +469,5 @@ class CampusConnect:
 
             else:
                 print("\nInvalid choice. Please select 1, 2, 3 or 0.")
+
+
