@@ -4,12 +4,19 @@
 # =====================================================
 
 import sqlite3
+from datetime import datetime
+from pathlib import Path
 
 class Database:
     """Handles database operations for CampusConnect."""
 
-    def __init__(self, database_name="campusconnect.db"):
-        self.database_name = database_name
+    def __init__(self, database_name=None):
+        if database_name is None:
+            database_path = Path(__file__).resolve().with_name("campusconnect.db")
+        else:
+            database_path = Path(database_name).expanduser().resolve()
+
+        self.database_name = str(database_path)
         self.create_tables()
 
     def connect(self):
@@ -51,7 +58,6 @@ class Database:
         connection.commit()
         connection.close()
 
-        print("Database tables created successfully!")
 
     def insert_lost_item(self, item):
         """Save a reported lost item in the database."""
@@ -109,93 +115,33 @@ class Database:
         print(f"Found item recorded successfully! ID: {item_id}")
         return item_id
 
-    def fetch_items(self, search_term=None):
-        """Retrieve lost and found items from the database."""
+    def fetch_available_items(self, field=None, keyword=None):
+        """Retrieve found items that are still available.
 
-        connection = self.connect()
-        cursor = connection.cursor()
-
-        if search_term:
-            search = f"%{search_term}%"
-
-            cursor.execute("""
-                SELECT id, item_name, category, description,
-                       location, date_lost, contact, 'Lost' AS item_type
-                FROM lost_items
-                WHERE item_name LIKE ?
-                   OR category LIKE ?
-                   OR location LIKE ?
-
-                UNION ALL
-
-                SELECT id, item_name, category, description,
-                       location, date_found, contact, 'Found' AS item_type
-                FROM found_items
-                WHERE item_name LIKE ?
-                   OR category LIKE ?
-                   OR location LIKE ?
-            """, (search, search, search, search, search, search))
-
-        else:
-            cursor.execute("""
-                SELECT id, item_name, category, description,
-                       location, date_lost, contact, 'Lost' AS item_type
-                FROM lost_items
-
-                UNION ALL
-
-                SELECT id, item_name, category, description,
-                       location, date_found, contact, 'Found' AS item_type
-                FROM found_items
-            """)
-
-        results = cursor.fetchall()
-        connection.close()
-
-        return results
-
-    def search_items(self, field, keyword):
-        """Search lost and found items by a specific field."""
-
-        allowed_fields = ["item_name", "category", "location"]
-
-        if field not in allowed_fields:
-            print("Invalid search field.")
-            return []
-
-        connection = self.connect()
-        cursor = connection.cursor()
-
-        search = f"%{keyword}%"
-
-        query = f"""
-            SELECT id, item_name, category, description,
-                   location, date_lost AS item_date,
-                   contact, 'Lost' AS item_type
-            FROM lost_items
-            WHERE {field} LIKE ?
-
-            UNION ALL
-
-            SELECT id, item_name, category, description,
-                   location, date_found AS item_date,
-                   contact, 'Found' AS item_type
-            FROM found_items
-            WHERE {field} LIKE ?
+        Optionally filter by item_name, category or location.
         """
 
-        cursor.execute(query, (search, search))
+        query = """
+            SELECT id, item_name, category, description,
+                   location, date_found, contact, status
+            FROM found_items
+            WHERE status = 'Available'
+        """
+        params = ()
 
-        columns = [
-            description[0]
-            for description in cursor.description
-        ]
+        if field and keyword:
+            if field not in ("item_name", "category", "location"):
+                print("Invalid search field.")
+                return []
+            query += f" AND {field} LIKE ?"
+            params = (f"%{keyword}%",)
 
-        results = [
-            dict(zip(columns, row))
-            for row in cursor.fetchall()
-        ]
+        query += " ORDER BY id"
 
+        connection = self.connect()
+        cursor = connection.cursor()
+        cursor.execute(query, params)
+        results = cursor.fetchall()
         connection.close()
 
         return results
@@ -226,11 +172,10 @@ class Database:
             print("Item not found or has already been returned.")
 
         return updated
+
 # =====================================================
 #  LOST ITEM REPORTING
 # =====================================================
-
-from datetime import datetime
 
 class LostItem:
     """Handles reporting of lost items."""
@@ -336,7 +281,7 @@ class FoundItem:
             "contact": contact
         }
 
-        # Save using Member 1's database function
+        # Save to the database
         self.database.insert_found_item(item)
 
         print("\nFound item registered successfully!")
@@ -346,13 +291,16 @@ class FoundItem:
 # =====================================================
 
 class SearchItems:
-    """Handles searching for lost and found items."""
+    """Handles searching for available found items."""
 
     def __init__(self, database):
         self.database = database
 
     def search_items(self):
-        """Search lost and found items by name, category or location."""
+        """Search available found items by name, category or location.
+
+        Returns the list of matching items.
+        """
 
         print("\n========== SEARCH FOR AN ITEM ==========")
         print("1. Search by item name")
@@ -369,102 +317,21 @@ class SearchItems:
 
         if choice not in search_fields:
             print("\nError: Invalid search option.")
-            return
+            return []
 
-        field = search_fields[choice]
         keyword = input("Enter your search keyword: ").strip()
 
         if not keyword:
             print("\nError: Search keyword cannot be empty.")
-            return
-
-        results = self.database.search_items(field, keyword)
-
-        if not results:
-            print("\nNo matching items found.")
-            return
-
-        print("\n========== SEARCH RESULTS ==========")
-
-        for item in results:
-            print(f"\nItem ID: {item['id']}")
-            print(f"Item Name: {item['item_name']}")
-            print(f"Category: {item['category']}")
-            print(f"Description: {item['description']}")
-            print(f"Location: {item['location']}")
-            print(f"Date: {item['item_date']}")
-            print(f"Contact: {item['contact']}")
-            print(f"Item Type: {item['item_type']}")
-
-            if item["item_type"] == "Found":
-                print(f"Status: {item['status']}")
-
-            print("------------------------------------")
-
-        print(f"\nTotal matching items: {len(results)}")
-
-
-import sqlite3
-
-
-class Database:
-    """Database wrapper for searching lost and found items."""
-
-    def __init__(self, db_path="campusconnect.db"):
-        self.db_path = db_path
-
-    def connect(self):
-        return sqlite3.connect(self.db_path)
-
-    def search_items(self, field, keyword):
-        """Search lost and found items by name, category or location."""
-
-        allowed_fields = ["item_name", "category", "location"]
-
-        if field not in allowed_fields:
-            print("Invalid search field.")
             return []
 
-        connection = self.connect()
-        cursor = connection.cursor()
+        return self.database.fetch_available_items(search_fields[choice], keyword)
 
-        search_value = f"%{keyword}%"
-
-        query = """
-            SELECT
-                id, item_name, category, description,
-                location, date_lost AS item_date,
-                contact, 'Lost' AS item_type,
-                NULL AS status
-            FROM lost_items
-            WHERE {field} LIKE ?
-
-            UNION ALL
-
-            SELECT
-                id, item_name, category, description,
-                location, date_found AS item_date,
-                contact, 'Found' AS item_type,
-                status
-            FROM found_items
-            WHERE {field} LIKE ?
-        """.format(field=field)
-
-        cursor.execute(query, (search_value, search_value))
-        columns = [column[0] for column in cursor.description]
-
-        results = [
-            dict(zip(columns, row))
-            for row in cursor.fetchall()
-        ]
-
-        connection.close()
-        return results
 
 # =====================================================
 # CAMPUSCONNECT - MAIN APPLICATION
 #  SYSTEM INTEGRATION AND CLAIM MANAGEMENT
-# =============================================================
+# =====================================================
 
 class CampusConnect:
     """Main application controller for CampusConnect."""
@@ -472,27 +339,26 @@ class CampusConnect:
     def __init__(self, database):
         """Initialize the application."""
         self.database = database
+        self.lost_items = LostItem(database)
+        self.found_items = FoundItem(database)
+        self.searcher = SearchItems(database)
         self.running = True
 
     def display_menu(self):
         """Display the main application menu."""
 
         print("\n" + "=" * 50)
-        print("          CAMPUSCONNECT")
-        print("       LOST AND FOUND SYSTEM")
+        print("CAMPUSCONNECT".center(50))
+        print("ALU LOST AND FOUND SYSTEM".center(50))
         print("=" * 50)
-
-        print("1. Report Lost Item")
-        print("2. Report Found Item")
-        print("3. Search for Items")
-        print("4. View Available Items")
-        print("5. Claim/Collect Found Item")
-        print("6. Exit")
-
-        print("=" * 50)
+        print("\nHow may we help you today?\n")
+        print("1. Report a Lost Item")
+        print("2. Register a Found Item")
+        print("3. Claim for an Item")
+        print("0. Exit System")
 
     def get_input(self, message):
-        """Get validated input from the user."""
+        """Get non-empty input from the user."""
 
         while True:
             value = input(message).strip()
@@ -502,212 +368,107 @@ class CampusConnect:
 
             print("Input cannot be empty. Please try again.")
 
-    def get_item_id(self):
-        """Get a valid item ID."""
+    def display_items(self, items):
+        """Print a list of available found items."""
+
+        if not items:
+            print("\nNo matching available items found.")
+            return
+
+        for item in items:
+            print("-" * 50)
+            print("Item ID:", item[0])
+            print("Item Name:", item[1])
+            print("Category:", item[2])
+            print("Description:", item[3])
+            print("Location:", item[4])
+            print("Date Found:", item[5])
+            print("Contact:", item[6])
+            print("Status:", item[7])
+
+        print("-" * 50)
+        print(f"Total available items: {len(items)}")
+
+    def claim_item(self):
+        """View or search available items, then claim one."""
 
         while True:
-            try:
-                item_id = int(input("Enter item ID: "))
+            print("\n========== CLAIM FOR AN ITEM ==========")
+            print("1. View all available items")
+            print("2. Search for an item")
+            print("0. Back to main menu")
 
-                if item_id > 0:
-                    return item_id
+            choice = input("\nSelect an option: ").strip()
 
-                print("Item ID must be greater than zero.")
+            if choice == "1":
+                print("\n========== AVAILABLE FOUND ITEMS ==========")
+                items = self.database.fetch_available_items()
+            elif choice == "2":
+                items = self.searcher.search_items()
+            elif choice == "0":
+                return
+            else:
+                print("\nInvalid choice. Please select 1, 2 or 0.")
+                continue
 
-            except ValueError:
-                print("Please enter a valid numerical ID.")
+            self.display_items(items)
 
-    def report_lost_item(self):
-        """Allow users to report lost items."""
+            if items:
+                self.collect_item({item[0] for item in items})
 
-        print("\n========== REPORT LOST ITEM ==========")
+    def collect_item(self, valid_ids):
+        """Ask which listed item to claim and record the collection."""
 
-        item = (
-            self.get_input("Item name: "),
-            self.get_input("Category: "),
-            self.get_input("Description: "),
-            self.get_input("Location lost: "),
-            self.get_input("Date lost (YYYY-MM-DD): "),
-            self.get_input("Contact information: ")
-        )
+        while True:
+            value = input("\nEnter the ID of the item to claim (0 to go back): ").strip()
 
-        try:
-            self.database.insert_lost_item(item)
-
-            print("\nLost item reported successfully!")
-
-        except Exception as error:
-            print("Unable to report lost item:", error)
-
-    def report_found_item(self):
-        """Allow users to report found items."""
-
-        print("\n========== REPORT FOUND ITEM ==========")
-
-        item = (
-            self.get_input("Item name: "),
-            self.get_input("Category: "),
-            self.get_input("Description: "),
-            self.get_input("Location found: "),
-            self.get_input("Date found (YYYY-MM-DD): "),
-            self.get_input("Contact information: ")
-        )
-
-        try:
-            self.database.insert_found_item(item)
-
-            print("\nFound item reported successfully!")
-
-        except Exception as error:
-            print("Unable to report found item:", error)
-
-    def search_items(self):
-        """Search for lost and found items."""
-
-        print("\n========== SEARCH ITEMS ==========")
-
-        search_term = self.get_input(
-            "Enter item name, category or location: "
-        )
-
-        try:
-            items = self.database.fetch_items(search_term)
-
-            if not items:
-                print("\nNo matching items found.")
+            if value == "0":
                 return
 
-            print("\nSearch Results")
-            print("-" * 50)
+            if value.isdigit() and int(value) in valid_ids:
+                item_id = int(value)
+                break
 
-            for item in items:
-                print(item)
+            print("Please enter one of the item IDs listed above.")
 
-        except Exception as error:
-            print("Search failed:", error)
+        claimant_name = self.get_input("Enter your full name: ")
 
-    def view_available_items(self):
-        """Display available found items."""
+        print("\nConfirm that you have verified ownership.")
+        confirmation = input(
+            "Has the item been successfully handed over? (yes/no): "
+        ).strip().lower()
 
-        print("\n========== AVAILABLE FOUND ITEMS ==========")
-
-        try:
-            items = self.database.fetch_items()
-
-            if not items:
-                print("No items currently available.")
-                return
-
-            available_items = [
-                item for item in items
-                if len(item) > 8 and item[8] == "Available"
-            ]
-
-            if not available_items:
-                print("No available found items.")
-                return
-
-            for item in available_items:
-                print("-" * 50)
-                print("Item ID:", item[0])
-                print("Item Name:", item[1])
-                print("Category:", item[2])
-                print("Description:", item[3])
-                print("Location:", item[4])
-                print("Date Found:", item[5])
-                print("Contact:", item[6])
-                print("Status:", item[8])
-
-        except Exception as error:
-            print("Unable to retrieve available items:", error)
-
-    def claim_found_item(self):
-        """Allow users to collect a found item."""
-
-        print("\n========== CLAIM FOUND ITEM ==========")
+        if confirmation != "yes":
+            print("\nCollection not confirmed.")
+            return
 
         try:
-            item_id = self.get_item_id()
-
-            claimant_name = self.get_input(
-                "Enter your full name: "
-            )
-
-            print("\nConfirm that you have verified ownership.")
-            confirmation = input(
-                "Has the item been successfully handed over? (yes/no): "
-            ).strip().lower()
-
-            if confirmation != "yes":
-                print("\nCollection not confirmed.")
-                return
-
-            self.database.update_item_status(
-                item_id,
-                claimant_name
-            )
-
-            print("\nItem collection recorded successfully!")
-            print("The item status has been updated.")
-
+            self.database.update_item_status(item_id, claimant_name)
         except Exception as error:
             print("Unable to process item collection:", error)
 
     def run(self):
         """Run the main application."""
 
-        print("\nWelcome to CampusConnect!")
-
         while self.running:
 
             self.display_menu()
 
-            choice = input("Select an option (1-6): ").strip()
+            choice = input("\nSelect an option: ").strip()
 
             if choice == "1":
-                self.report_lost_item()
+                self.lost_items.report_lost_item()
 
             elif choice == "2":
-                self.report_found_item()
+                self.found_items.register_found_item()
 
             elif choice == "3":
-                self.search_items()
+                self.claim_item()
 
-            elif choice == "4":
-                self.view_available_items()
-
-            elif choice == "5":
-                self.claim_found_item()
-
-            elif choice == "6":
+            elif choice == "0":
                 print("\nThank you for using CampusConnect!")
                 print("Goodbye!")
                 self.running = False
 
             else:
-                print("\nInvalid choice. Please select 1-6.")
-
-
-# =====================================================
-# APPLICATION ENTRY POINT
-# =====================================================
-
-def main():
-    """Initialize the database and start CampusConnect."""
-
-    try:
-        database = Database()
-
-        application = CampusConnect(database)
-
-        application.run()
-
-    except KeyboardInterrupt:
-        print("\n\nApplication interrupted. Goodbye!")
-
-    except Exception as error:
-        print("\nApplication error:", error)
-
-
-if __name__ == "__main__":
-    main()
+                print("\nInvalid choice. Please select 1, 2, 3 or 0.")

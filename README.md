@@ -1,36 +1,76 @@
-# CampusConnect – ALU Lost and Found System
+# CampusConnect - ALU Lost and Found System
 
-CampusConnect is a simple lost-and-found system for the African Leadership University community. It helps students report belongings they have lost or found, search for items, and record when an item has been collected.
+CampusConnect is a simple lost-and-found system for the African Leadership University community. Students can report belongings they have lost, register items they have found, and claim found items that belong to them.
 
-## What the System Does
+## Main Menu
 
-- **Report lost items:** Add the item's name, category, description, last known location, date it was lost, and contact details.
-- **Report found items:** Share details about an item that has been found so its owner can identify and collect it.
-- **Search for items:** Find reports using an item's name, category, or location.
-- **View available items:** See found items that have not yet been collected.
-- **Record item collection:** Confirm that an item has been handed back and record the name of the person who collected it.
+```
+==================================================
+                  CAMPUSCONNECT
+            ALU LOST AND FOUND SYSTEM
+==================================================
 
-## How It Works
+How may we help you today?
 
-The application runs in a terminal and guides the user through a simple menu. Users choose the action they want to complete and provide the requested information. Item records are saved in a local SQLite database, which is created automatically when the application first runs.
+1. Report a Lost Item
+2. Register a Found Item
+3. Claim for an Item
+0. Exit System
+```
 
-When reporting an item, users provide the relevant details and the date in year-month-day format. When collecting a found item, the user provides the item ID and their name, then confirms that the item has been handed over.
+### 1. Report a Lost Item
 
-## Technology Used
+Enter the item's name, category, description, where you last saw it, the date it was lost (YYYY-MM-DD) and your contact details. All fields are required.
 
-The project is built with Python and uses SQLite to store item records. It uses Python's built-in date and database tools, so no additional packages are needed for the code provided.
+### 2. Register a Found Item
+
+Enter the item's name, category, description, where you found it, the date it was found (YYYY-MM-DD) and your contact details. The item is saved as **Available** so its owner can claim it.
+
+### 3. Claim for an Item
+
+This option opens a smaller menu:
+
+```
+1. View all available items
+2. Search for an item
+0. Back to main menu
+```
+
+- **View all available items** lists every found item that has not been collected yet.
+- **Search for an item** finds available items by name, category or location.
+
+After the items are listed, enter the ID of the item you want to claim, or `0` to go back. Then enter your full name and confirm that the item has been handed over. The item is marked as **Returned**, your name is recorded, and the item no longer appears as available.
+
+### 0. Exit System
+
+Closes the application.
+
+## Running the Project
+
+You need Python 3. No extra packages are required.
+
+```
+python main.py
+```
+
+The SQLite database (`campusconnect.db`) is created automatically in the project folder the first time the application runs. It is always used from that location, no matter which folder you run the command from.
 
 ## Database
 
 The system stores information in two tables:
 
-- **Lost items:** Keeps the details of items reported missing.
-- **Found items:** Keeps the details of items reported found, including whether they are still available or have been returned, and who collected them.
+- **lost_items** holds the details of items reported missing.
+- **found_items** holds the details of items reported found, their status (`Available` or `Returned`) and the name of the person who collected them.
 
-## Running the Project
+## Code Structure
 
-Make sure Python 3 is installed on your computer. Open the project folder in a terminal and run the main Python file. The database and its tables will be created automatically when the application starts.
+- `main.py` is the entry point. Run this file to start the application.
+- `campusconnect.py` contains the application classes:
 
-## Notes
-
-Some parts of the current source code need to be aligned and tested, particularly the way item details are passed to the database and how available found items are retrieved. These should be fixed to ensure all menu options work as expected.
+| Class          | Responsibility                                                  |
+| -------------- | --------------------------------------------------------------- |
+| `Database`     | Creates the tables and reads and writes item records            |
+| `LostItem`     | Collects and validates lost item reports                        |
+| `FoundItem`    | Collects and validates found item registrations                 |
+| `SearchItems`  | Searches available found items by name, category or location    |
+| `CampusConnect`| Shows the main menu and handles the claim process               |
