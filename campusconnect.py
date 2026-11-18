@@ -58,7 +58,6 @@ class Database:
         connection.commit()
         connection.close()
 
-
     def insert_lost_item(self, item):
         """Save a reported lost item in the database."""
 
@@ -194,8 +193,7 @@ class LostItem:
         location = input("Where did you last see the item? ").strip()
         date_lost = input("Date lost (YYYY-MM-DD): ").strip()
         contact = input("Enter your contact information: ").strip()
-
-         
+        
         if not all([
             item_name,
             category,
@@ -204,18 +202,18 @@ class LostItem:
             date_lost,
             contact
         ]):
+            
             print("\nError: All fields are required.")
             return
-
-      
+            
         try:
+            
             datetime.strptime(date_lost, "%Y-%m-%d")
         except ValueError:
             print("\nError: Invalid date format.")
             print("Please use YYYY-MM-DD.")
             return
-
-        
+            
         item = {
             "item_name": item_name,
             "category": category,
@@ -224,11 +222,10 @@ class LostItem:
             "date_lost": date_lost,
             "contact": contact
         }
-
-      
+        
         self.database.insert_lost_item(item)
-
         print("\nYour lost item report has been submitted!")
+
 # =====================================================
 #  FOUND ITEM REGISTRATION
 # ============================================================
