@@ -67,10 +67,11 @@ The application keeps its information in two tables:
 - `main.py` is the entry point of the system, i.e. the file needed to start the app.
 - `campusconnect.py` is the file that contains classes of the program.
 
-| Class          | Responsibility                                                  |
-| -------------- | --------------------------------------------------------------- |
-| `Database`     | Creates the tables and reads and writes item records            |
-| `LostItem`     | Collects and validates lost item reports                        |
-| `FoundItem`    | Collects and validates found item registrations                 |
-| `SearchItems`  | Searches available found items by name, category or location    |
-| `CampusConnect`| Shows the main menu and handles the claim process               |
+| Class          | Functionality                                                   |
+| -------------- | -------------------------------------------------------------- |
+| `Database`     | Constructs tables and records items                            |
+| `LostItem`     | Handles lost item reports and verifies them                   |
+| `FoundItem`    | Receives and verifies found item records                      |
+| `SearchItems`  | Looks for found items                                         |
+| `CampusConnect`| Displays the main menu and processes claims                   |
+
