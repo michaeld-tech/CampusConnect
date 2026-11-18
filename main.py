@@ -1,11 +1,9 @@
 # =====================================================
 # CAMPUSCONNECT - ALU LOST AND FOUND SYSTEM
 #  APPLICATION ENTRY POINT
-
 # =====================================================
 
 from campusconnect import CampusConnect, Database
-
 
 def main():
     """Initialize the database and start CampusConnect."""
@@ -22,7 +20,6 @@ def main():
 
     except Exception as error:
         print("\nApplication error:", error)
-
 
 if __name__ == "__main__":
     main()
